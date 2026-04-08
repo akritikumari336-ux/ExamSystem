@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Online Exam System</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f0f4f8; color: #333; }
+
+    /* ── Layout ── */
+    .hidden  { display: none !important; }
+    .page    { padding: 24px; max-width: 960px; margin: 0 auto; }
+
+    /* ── Login ── */
+    #loginPage {
+      min-height: 100vh; display: flex; align-items: center;
+      justify-content: center; background: #1e3a5f;
+    }
+    .login-box {
+      background: #fff; border-radius: 12px; padding: 36px;
+      width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .login-box h1 { text-align: center; color: #1e3a5f; margin-bottom: 6px; }
+    .login-box p  { text-align: center; color: #666; margin-bottom: 24px; font-size: 14px; }
+    .tab-row { display: flex; background: #f0f4f8; border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+    .tab-btn {
+      flex: 1; padding: 8px; border: none; background: transparent;
+      border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 600; color: #666;
+    }
+    .tab-btn.active { background: #fff; color: #1e3a5f; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .hint { background: #e8f0fe; padding: 10px 14px; border-radius: 8px; font-size: 12px; margin-bottom: 16px; color: #1e3a5f; }
+
+    /* ── Forms ── */
+    label  { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #444; }
+    input, select, textarea {
+      width: 100%; padding: 10px 12px; border: 1.5px solid #ddd;
+      border-radius: 8px; font-size: 14px; margin-bottom: 14px; font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 70px; }
+    input:focus, select:focus { outline: none; border-color: #1e3a5f; }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 10px 20px; border: none; border-radius: 8px;
+      cursor: pointer; font-size: 14px; font-weight: 700;
+    }
+    .btn-primary { background: #1e3a5f; color: #fff; }
+    .btn-primary:hover { background: #16305a; }
+    .btn-success { background: #16a34a; color: #fff; }
+    .btn-danger  { background: #fee2e2; color: #dc2626; }
+    .btn-gray    { background: #f0f4f8; color: #333; }
+    .btn-sm      { padding: 6px 14px; font-size: 12px; border-radius: 6px; }
+    .btn-full    { width: 100%; margin-top: 4px; }
+
+    /* ── Navbar ── */
+    nav {
+      background: #1e3a5f; color: #fff; padding: 0 24px;
+      display: flex; align-items: center; justify-content: space-between; height: 56px;
+      position: sticky; top: 0; z-index: 100;
+    }
+    nav .brand { font-size: 18px; font-weight: 800; }
+    nav .nav-right { display: flex; align-items: center; gap: 12px; font-size: 14px; }
+    nav button { background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+
+    /* ── Sidebar + Content ── */
+    .layout { display: flex; }
+    .sidebar {
+      width: 200px; background: #fff; min-height: calc(100vh - 56px);
+      border-right: 1px solid #e5e7eb; padding: 16px 10px;
+      position: fixed; top: 56px;
+    }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+      border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500;
+      margin-bottom: 4px; color: #555;
+    }
+    .nav-item:hover  { background: #f0f4f8; }
+    .nav-item.active { background: #e8f0fe; color: #1e3a5f; font-weight: 700; }
+    .main-content { margin-left: 200px; padding: 24px; min-height: calc(100vh - 56px); }
+
+    /* ── Cards ── */
+    .card {
+      background: #fff; border-radius: 12px; padding: 20px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06); border: 1px solid #eee; margin-bottom: 16px;
+    }
+    .card h2 { margin-bottom: 16px; font-size: 18px; color: #1e3a5f; }
+    .card h3 { margin-bottom: 12px; font-size: 15px; }
+
+    /* ── Stats Row ── */
+    .stats { display: flex; gap: 14px; margin-bottom: 20px; flex-wrap: wrap; }
+    .stat-card {
+      flex: 1; min-width: 130px; border-radius: 10px;
+      padding: 16px; text-align: center;
+    }
+    .stat-card .num  { font-size: 30px; font-weight: 800; }
+    .stat-card .lbl  { font-size: 13px; margin-top: 4px; }
+
+    /* ── Table ── */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th { text-align: left; padding: 10px 12px; background: #f8f9fc; font-size: 12px; color: #666; text-transform: uppercase; }
+    td { padding: 11px 12px; border-bottom: 1px solid #f3f4f6; }
+    tr:last-child td { border-bottom: none; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 12px; font-weight: 600;
+    }
+    .badge-blue   { background: #e8f0fe; color: #1e3a5f; }
+    .badge-green  { background: #dcfce7; color: #15803d; }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-amber  { background: #fef3c7; color: #92400e; }
+    .badge-gray   { background: #f3f4f6; color: #555; }
+
+    /* ── Alert ── */
+    .alert { padding: 12px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 14px; }
+    .alert-blue   { background: #e8f0fe; color: #1e3a5f; }
+    .alert-green  { background: #dcfce7; color: #15803d; }
+    .alert-red    { background: #fee2e2; color: #dc2626; }
+    .alert-amber  { background: #fef3c7; color: #92400e; }
+
+    /* ── Modal ── */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      z-index: 200; display: flex; align-items: center; justify-content: center; padding: 16px;
+    }
+    .modal {
+      background: #fff; border-radius: 14px; padding: 28px;
+      width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
+    .modal h2 { margin-bottom: 18px; font-size: 18px; color: #1e3a5f; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+    /* ── Exam Screen ── */
+    .exam-header {
+      background: #1e3a5f; color: #fff; border-radius: 12px;
+      padding: 16px 20px; margin-bottom: 20px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+    }
+    .timer {
+      background: rgba(255,255,255,0.2); border-radius: 8px;
+      padding: 8px 18px; font-size: 20px; font-weight: 800;
+    }
+    .timer.urgent { background: #dc2626; animation: blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .q-nav { display: grid; grid-template-columns: repeat(5,1fr); gap: 6px; margin-bottom: 16px; }
+    .q-nav button {
+      padding: 8px 4px; border: 2px solid #ddd; border-radius: 6px;
+      cursor: pointer; font-weight: 700; font-size: 13px; background: #fff;
+    }
+    .q-nav button.current   { border-color: #1e3a5f; background: #e8f0fe; color: #1e3a5f; }
+    .q-nav button.answered  { border-color: #16a34a; background: #dcfce7; color: #15803d; }
+    .option-btn {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      border: 2px solid #e5e7eb; border-radius: 10px; cursor: pointer;
+      background: #fff; width: 100%; text-align: left; font-size: 15px;
+      margin-bottom: 10px; transition: all .15s;
+    }
+    .option-btn:hover    { border-color: #1e3a5f; background: #f0f4ff; }
+    .option-btn.selected { border-color: #1e3a5f; background: #e8f0fe; font-weight: 700; }
+    .opt-circle {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 13px; background: #f0f4f8; color: #333;
+    }
+    .option-btn.selected .opt-circle { background: #1e3a5f; color: #fff; }
+
+    /* ── Result ── */
+    .result-header {
+      border-radius: 12px; padding: 28px; text-align: center;
+      color: #fff; margin-bottom: 20px;
+    }
+    .result-header .big-num { font-size: 48px; font-weight: 800; }
+    .result-options { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .opt-review {
+      padding: 7px 10px; border-radius: 8px; font-size: 13px;
+      border: 1.5px solid #e5e7eb; background: #f8f9fc; color: #555;
+    }
+    .opt-review.correct { background: #dcfce7; border-color: #16a34a; color: #15803d; }
+    .opt-review.wrong   { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
+
+    /* ── Grid helpers ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .flex-gap { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .mt { margin-top: 12px; }
+    .mb { margin-bottom: 12px; }
+    .error-msg { color: #dc2626; font-size: 13px; margin-bottom: 10px; }
+    .page-title { font-size: 22px; font-weight: 800; color: #1e3a5f; margin-bottom: 4px; }
+    .page-sub   { font-size: 14px; color: #666; margin-bottom: 18px; }
+
+    /* Progress bar */
+    .progress-wrap { background: #f0f4f8; height: 8px; border-radius: 4px; overflow: hidden; margin-bottom: 14px; }
+    .progress-bar  { height: 100%; border-radius: 4px; transition: width 1s; }
+
+    /* Checkbox list for question selection */
+    .q-check-list { max-height: 220px; overflow-y: auto; border: 1.5px solid #ddd; border-radius: 8px; padding: 8px; }
+    .q-check-item { display: flex; gap: 10px; align-items: flex-start; padding: 7px 4px; border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+    .q-check-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginPage">
+  <div class="login-box">
+    <h1>📝 ExamCloud</h1>
+    <p>Online Examination System</p>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('student')">Student</button>
+      <button class="tab-btn"        onclick="switchTab('admin')">Admin</button>
+    </div>
+
+    <div class="hint" id="loginHint">
+      Email: <b>riya@exam.com</b> &nbsp;·&nbsp; Password: <b>pass123</b>
+    </div>
+    <div class="error-msg hidden" id="loginError">Invalid email or password.</div>
+    <label>Email</label>
+    <input type="email" id="loginEmail" placeholder="Enter email" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <label>Password</label>
+    <input type="password" id="loginPassword" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In</button>
+  </div>
+</div>
+
+<!-- ═══════════════ APP (hidden until login) ═══════════════ -->
+<div id="appShell" class="hidden">
+  <!-- Navbar -->
+  <nav>
+    <div class="brand">📝 ExamCloud</div>
+    <div class="nav-right">
+      <span id="navUserName"></span>
+      <span id="navUserRole" class="badge badge-blue"></span>
+      <button onclick="doLogout()">Logout</button>
+    </div>
+  </nav>
+
+  <div class="layout">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar"></div>
+
+    <!-- Pages -->
+    <div class="main-content">
+      <div id="pageDashboard"  class="hidden"></div>
+      <div id="pageQuestions"  class="hidden"></div>
+      <div id="pageExams"      class="hidden"></div>
+      <div id="pageStudents"   class="hidden"></div>
+      <div id="pageResults"    class="hidden"></div>
+      <div id="pageProfile"    class="hidden"></div>
+      <div id="pageExamSession"class="hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ MODAL ═══════════════ -->
+<div id="modalOverlay" class="overlay hidden" onclick="closeModal(event)">
+  <div class="modal" id="modalBox">
+    <h2 id="modalTitle"></h2>
+    <div id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter"></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+//  DATA — seed & storage
+// ════════════════════════════════════════════════════════════
+const SEED = {
+  users: [
+    {id:'u1',role:'admin',  name:'Admin User', email:'admin@exam.com', password:'admin123'},
+    {id:'u2',role:'student',name:'Akriti kumari',email:'riya@exam.com',  password:'pass123'},
+    {id:'u3',role:'student',name:'Aditi kumari',email:'arjun@exam.com', password:'pass123'},
+  ],
+  questions: [
+    {id:'q1',subject:'Maths',   topic:'Algebra',    diff:'Easy',  text:'What is 2x + 6 = 14? Find x.', options:['3','4','5','6'],             answer:1, marks:2},
+    {id:'q2',subject:'Maths',   topic:'Geometry',   diff:'Easy',  text:'Sum of angles in a triangle?', options:['90°','180°','270°','360°'],   answer:1, marks:1},
+    {id:'q3',subject:'Maths',   topic:'Calculus',   diff:'Hard',  text:'Derivative of sin(x)?',        options:['cos(x)','-cos(x)','tan(x)','sec(x)'], answer:0, marks:3},
+    {id:'q4',subject:'Physics', topic:'Mechanics',  diff:'Easy',  text:"Newton's 2nd law: F =",        options:['ma','mv','m/a','m+a'],        answer:0, marks:2},
+    {id:'q5',subject:'Physics', topic:'Optics',     diff:'Medium',text:'Speed of light (approx.)?',    options:['3×10⁶','3×10⁷','3×10⁸','3×10⁹'], answer:2, marks:2},
+    {id:'q6',subject:'Chem',    topic:'Periodic',   diff:'Easy',  text:'Atomic number of Carbon?',     options:['6','7','8','12'],             answer:0, marks:1},
+    {id:'q7',subject:'Chem',    topic:'Bonding',    diff:'Medium',text:'Bond type in NaCl?',           options:['Covalent','Ionic','Metallic','Hydrogen'], answer:1, marks:2},
+    {id:'q8',subject:'CS',      topic:'OOP',        diff:'Medium',text:"'One interface, many forms'?", options:['Inheritance','Encapsulation','Polymorphism','Abstraction'], answer:2, marks:2},
+  ],
+  exams: [
+    {id:'e1',title:'Maths Test',   subject:'Maths',  duration:20,totalMarks:6, passMark:4,questionIds:['q1','q2','q3'],status:'active',instructions:'No calculators.'},
+    {id:'e2',title:'Science Quiz', subject:'Mixed',  duration:30,totalMarks:9, passMark:6,questionIds:['q4','q5','q6','q7','q8'],status:'active',instructions:'Read carefully.'},
+  ],
+  attempts: [
+    {id:'a1',examId:'e1',studentId:'u2',studentName:'Riya Sharma', answers:{q1:1,q2:1,q3:0},score:6,totalMarks:6,timeTaken:12,submittedAt:'2026-03-20T10:30'},
+    {id:'a2',examId:'e2',studentId:'u3',studentName:'Arjun Mehta', answers:{q4:0,q5:2,q6:1,q7:0,q8:2},score:6,totalMarks:9,timeTaken:25,submittedAt:'2026-03-21T14:00'},
+  ],
+}
+
+function load(k)    { try { const v=localStorage.getItem('oes_'+k); return v?JSON.parse(v):SEED[k]; } catch{ return SEED[k]; } }
+function save(k,v)  { localStorage.setItem('oes_'+k, JSON.stringify(v)); }
+function initData() { ['users','questions','exams','attempts'].forEach(k=>{ if(!localStorage.getItem('oes_'+k)) save(k,SEED[k]); }); }
+
+// ════════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════════
+const uid   = () => Math.random().toString(36).slice(2,8);
+const pct   = (s,t) => t ? Math.round(s/t*100) : 0;
+const grade = p => p>=90?'A+':p>=75?'A':p>=60?'B':p>=45?'C':p>=33?'D':'F';
+const gcol  = p => p>=60?'#16a34a':p>=33?'#d97706':'#dc2626';
+const fmtDate = s => new Date(s).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+const el    = id => document.getElementById(id);
+const html  = (id,h) => { el(id).innerHTML = h; };
+
+// ════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════
+let currentUser = null;
+let currentTab  = 'student';
+let currentPage = 'dashboard';
+let examState   = null; // { exam, questions, answers, timeLeft, timer }
+
+// ════════════════════════════════════════════════════════════
+//  LOGIN / LOGOUT
+// ════════════════════════════════════════════════════════════
+initData();
+
+function switchTab(t) {
+  currentTab = t;
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',i===(t==='student'?0:1)));
+  const hints = { student:'Email: <b>riya@exam.com</b> &nbsp;·&nbsp; Password: <b>pass123</b>', admin:'Email: <b>admin@exam.com</b> &nbsp;·&nbsp; Password: <b>admin123</b>' };
+  html('loginHint', hints[t]);
+}
+
+function doLogin() {
+  const email = el('loginEmail').value.trim();
+  const pw    = el('loginPassword').value.trim();
+  const users = load('users');
+  const user  = users.find(u => u.email===email && u.password===pw && u.role===currentTab);
+  if (!user) { el('loginError').classList.remove('hidden'); return; }
+  el('loginError').classList.add('hidden');
+  currentUser = user;
+  el('loginPage').classList.add('hidden');
+  el('appShell').classList.remove('hidden');
+  el('navUserName').textContent = user.name;
+  el('navUserRole').textContent = user.role;
+  buildSidebar();
+  showPage('dashboard');
+}
+
+function doLogout() {
+  if (examState) { clearInterval(examState.timer); examState = null; }
+  currentUser = null;
+  el('loginPage').classList.remove('hidden');
+  el('appShell').classList.add('hidden');
+  el('loginEmail').value = '';
+  el('loginPassword').value = '';
+}
+
+// ════════════════════════════════════════════════════════════
+//  SIDEBAR
+// ════════════════════════════════════════════════════════════
+function buildSidebar() {
+  const adminNav   = [{id:'dashboard',icon:'📊',label:'Dashboard'},{id:'questions',icon:'❓',label:'Question Bank'},{id:'exams',icon:'📋',label:'Exams'},{id:'students',icon:'👥',label:'Students'},{id:'results',icon:'📈',label:'Results'}];
+  const studentNav = [{id:'dashboard',icon:'🏠',label:'Dashboard'},{id:'results',icon:'📈',label:'My Results'},{id:'profile',icon:'👤',label:'Profile'}];
+  const nav = currentUser.role==='admin' ? adminNav : studentNav;
+  html('sidebar', nav.map(n=>`<div class="nav-item" id="nav_${n.id}" onclick="showPage('${n.id}')">${n.icon} ${n.label}</div>`).join(''));
+}
+
+function showPage(name) {
+  if (examState && name !== 'examSession') return; // block navigation during exam
+  currentPage = name;
+  document.querySelectorAll('.main-content > div').forEach(d=>d.classList.add('hidden'));
+  el('page'+capitalize(name)).classList.remove('hidden');
+  document.querySelectorAll('.nav-item').forEach(d=>d.classList.remove('active'));
+  const ni = el('nav_'+name); if(ni) ni.classList.add('active');
+
+  if(name==='dashboard')   renderDashboard();
+  if(name==='questions')   renderQuestions();
+  if(name==='exams')       renderExams();
+  if(name==='students')    renderStudents();
+  if(name==='results')     renderResults();
+  if(name==='profile')     renderProfile();
+}
+
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+
+// ════════════════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════════════════
+function renderDashboard() {
+  const users    = load('users');
+  const exams    = load('exams');
+  const questions= load('questions');
+  const attempts = load('attempts');
+
+  if (currentUser.role === 'admin') {
+    const students = users.filter(u=>u.role==='student');
+    const avg = attempts.length ? Math.round(attempts.reduce((a,b)=>a+pct(b.score,b.totalMarks),0)/attempts.length) : 0;
+    html('pageDashboard', `
+      <div class="page-title">Admin Dashboard</div>
+      <div class="page-sub">Welcome, ${currentUser.name}</div>
+      <div class="stats">
+        <div class="stat-card" style="background:#e8f0fe"><div class="num" style="color:#1e3a5f">${exams.length}</div><div class="lbl" style="color:#1e3a5f">Total Exams</div></div>
+        <div class="stat-card" style="background:#dcfce7"><div class="num" style="color:#15803d">${questions.length}</div><div class="lbl" style="color:#15803d">Questions</div></div>
+        <div class="stat-card" style="background:#fef3c7"><div class="num" style="color:#92400e">${students.length}</div><div class="lbl" style="color:#92400e">Students</div></div>
+        <div class="stat-card" style="background:#fee2e2"><div class="num" style="color:#dc2626">${attempts.length}</div><div class="lbl" style="color:#dc2626">Attempts</div></div>
+        <div class="stat-card" style="background:#f0f4ff"><div class="num" style="color:#6366f1">${avg}%</div><div class="lbl" style="color:#6366f1">Avg Score</div></div>
+      </div>
+      <div class="card">
+        <h3>Recent Submissions</h3>
+        ${attempts.length ? `<table><thead><tr><th>Student</th><th>Exam</th><th>Score</th><th>%</th><th>Grade</th></tr></thead><tbody>
+          ${attempts.slice(-6).reverse().map(a=>{
+            const p=pct(a.score,a.totalMarks);
+            const ex=exams.find(e=>e.id===a.examId);
+            return `<tr><td>${a.studentName}</td><td>${ex?.title||'—'}</td><td>${a.score}/${a.totalMarks}</td>
+              <td style="color:${gcol(p)};font-weight:700">${p}%</td><td style="color:${gcol(p)};font-weight:700">${grade(p)}</td></tr>`;
+          }).join('')}
+        </tbody></table>` : '<p style="color:#999">No attempts yet.</p>'}
+      </div>
+    `);
+  } else {
+    // Student dashboard
+    const myAttempts = attempts.filter(a=>a.studentId===currentUser.id);
+    const activeExams= exams.filter(e=>e.status==='active');
+    const attempted  = new Set(myAttempts.map(a=>a.examId));
+    const avg  = myAttempts.length ? Math.round(myAttempts.reduce((a,b)=>a+pct(b.score,b.totalMarks),0)/myAttempts.length) : 0;
+    const best = myAttempts.length ? Math.max(...myAttempts.map(a=>pct(a.score,a.totalMarks))) : 0;
+
+    html('pageDashboard', `
+      <div class="page-title">Welcome, ${currentUser.name.split(' ')[0]}! 👋</div>
+      <div class="page-sub">Here is your exam dashboard</div>
+      <div class="stats">
+        <div class="stat-card" style="background:#e8f0fe"><div class="num" style="color:#1e3a5f">${activeExams.length}</div><div class="lbl" style="color:#1e3a5f">Available</div></div>
+        <div class="stat-card" style="background:#dcfce7"><div class="num" style="color:#15803d">${myAttempts.length}</div><div class="lbl" style="color:#15803d">Completed</div></div>
+        <div class="stat-card" style="background:#fef3c7"><div class="num" style="color:#92400e">${avg}%</div><div class="lbl" style="color:#92400e">Avg Score</div></div>
+        <div class="stat-card" style="background:#f0f4ff"><div class="num" style="color:#6366f1">${best}%</div><div class="lbl" style="color:#6366f1">Best Score</div></div>
+      </div>
+      <div class="page-title" style="font-size:17px;margin-bottom:12px">Available Exams</div>
+      ${activeExams.map(e=>{
+        const done = attempted.has(e.id);
+        const att  = myAttempts.find(a=>a.examId===e.id);
+        const p    = att ? pct(att.score, att.totalMarks) : 0;
+        return `<div class="card" style="border-top:4px solid ${done?gcol(p):'#1e3a5f'}">
+          <div class="flex-between mb">
+            <div><b style="font-size:16px">${e.title}</b><br><span style="color:#666;font-size:13px">${e.subject}</span></div>
+            ${done ? `<span class="badge badge-green">✓ Done</span>` : '<span class="badge badge-blue">Active</span>'}
+          </div>
+          <div class="flex-gap mb">
+            <span class="badge badge-gray">⏱ ${e.duration} min</span>
+            <span class="badge badge-gray">❓ ${e.questionIds.length} questions</span>
+            <span class="badge badge-gray">🎯 ${e.totalMarks} marks</span>
+          </div>
+          ${done && att
+            ? `<div class="alert alert-green">Score: ${att.score}/${att.totalMarks} &nbsp;|&nbsp; ${p}% &nbsp;|&nbsp; Grade: ${grade(p)}</div>`
+            : `<button class="btn btn-primary btn-full" onclick="confirmStart('${e.id}')">Start Exam →</button>`}
+        </div>`;
+      }).join('') || '<p style="color:#999">No active exams.</p>'}
+    `);
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+//  QUESTION BANK
+// ════════════════════════════════════════════════════════════
+function renderQuestions() {
+  const questions = load('questions');
+  const diffBadge = {Easy:'badge-green',Medium:'badge-amber',Hard:'badge-red'};
+  html('pageQuestions', `
+    <div class="flex-between mb">
+      <div><div class="page-title">Question Bank</div><div class="page-sub">${questions.length} questions</div></div>
+      <button class="btn btn-primary" onclick="openAddQuestion()">+ Add Question</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>#</th><th>Subject</th><th>Question</th><th>Difficulty</th><th>Marks</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${questions.map((q,i)=>`<tr>
+            <td style="color:#999">${i+1}</td>
+            <td><span class="badge badge-blue">${q.subject}</span></td>
+            <td style="max-width:260px">${q.text.length>55?q.text.slice(0,55)+'…':q.text}</td>
+            <td><span class="badge ${diffBadge[q.diff]||'badge-gray'}">${q.diff}</span></td>
+            <td><b>${q.marks}</b></td>
+            <td>
+              <button class="btn btn-gray btn-sm" onclick="openEditQuestion('${q.id}')">Edit</button>
+              <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteQuestion('${q.id}')">Del</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+  `);
+}
+
+function openAddQuestion() {
+  html('modalTitle','Add Question');
+  html('modalBody', questionForm({}));
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveQuestion()">Save</button>`);
+  openModal();
+}
+function openEditQuestion(id) {
+  const q = load('questions').find(q=>q.id===id);
+  html('modalTitle','Edit Question');
+  html('modalBody', questionForm(q));
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveQuestion('${id}')">Save</button>`);
+  openModal();
+}
+function questionForm(q={}) {
+  const opts = q.options || ['','','',''];
+  return `
+    <div id="qFormErr" class="error-msg hidden">Fill all fields.</div>
+    <div class="grid2">
+      <div><label>Subject</label><input id="qSubject" value="${q.subject||''}"/></div>
+      <div><label>Topic</label><input id="qTopic" value="${q.topic||''}"/></div>
+      <div><label>Difficulty</label>
+        <select id="qDiff">
+          <option ${q.diff==='Easy'?'selected':''}>Easy</option>
+          <option ${q.diff==='Medium'?'selected':''}>Medium</option>
+          <option ${q.diff==='Hard'?'selected':''}>Hard</option>
+        </select>
+      </div>
+      <div><label>Marks</label><input type="number" id="qMarks" min="1" max="10" value="${q.marks||1}"/></div>
+    </div>
+    <label>Question Text</label>
+    <textarea id="qText">${q.text||''}</textarea>
+    <label>Options — select the correct answer</label>
+    ${opts.map((o,i)=>`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <input type="radio" name="qAns" value="${i}" ${q.answer===i?'checked':''} style="width:auto;margin:0"/>
+        <input id="qOpt${i}" value="${o}" placeholder="Option ${String.fromCharCode(65+i)}" style="margin:0"/>
+      </div>`).join('')}
+  `;
+}
+function saveQuestion(editId) {
+  const subject = el('qSubject').value.trim();
+  const text    = el('qText').value.trim();
+  const opts    = [0,1,2,3].map(i=>el('qOpt'+i).value.trim());
+  const radio   = document.querySelector('input[name="qAns"]:checked');
+  if (!subject||!text||opts.some(o=>!o)||!radio) { el('qFormErr').classList.remove('hidden'); return; }
+  const q = {
+    id: editId||'q'+uid(), subject, topic:el('qTopic').value.trim(),
+    diff: el('qDiff').value, marks:+el('qMarks').value,
+    text, options:opts, answer:+radio.value,
+  };
+  const qs = load('questions');
+  if (editId) { const i=qs.findIndex(x=>x.id===editId); qs[i]=q; }
+  else qs.push(q);
+  save('questions',qs);
+  closeModal();
+  renderQuestions();
+}
+function deleteQuestion(id) {
+  if (!confirm('Delete this question?')) return;
+  save('questions', load('questions').filter(q=>q.id!==id));
+  renderQuestions();
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXAM MANAGER
+// ════════════════════════════════════════════════════════════
+function renderExams() {
+  const exams    = load('exams');
+  const attempts = load('attempts');
+  html('pageExams',`
+    <div class="flex-between mb">
+      <div><div class="page-title">Exams</div><div class="page-sub">${exams.length} exams</div></div>
+      <button class="btn btn-primary" onclick="openAddExam()">+ Create Exam</button>
+    </div>
+    ${exams.map(e=>{
+      const cnt = attempts.filter(a=>a.examId===e.id).length;
+      return `<div class="card" style="border-left:5px solid ${e.status==='active'?'#16a34a':'#9ca3af'}">
+        <div class="flex-between mb">
+          <div><b style="font-size:16px">${e.title}</b><br><span style="color:#666;font-size:13px">${e.subject}</span></div>
+          <span class="badge ${e.status==='active'?'badge-green':'badge-gray'}">${e.status}</span>
+        </div>
+        <div class="flex-gap mb">
+          <span class="badge badge-blue">⏱ ${e.duration} min</span>
+          <span class="badge badge-amber">❓ ${e.questionIds.length} Qs</span>
+          <span class="badge badge-gray">🎯 ${e.totalMarks} marks</span>
+          <span class="badge badge-gray">📋 ${cnt} attempts</span>
+        </div>
+        ${e.instructions?`<div style="font-size:13px;color:#666;margin-bottom:10px">📌 ${e.instructions}</div>`:''}
+        <div class="flex-gap">
+          <button class="btn btn-gray btn-sm" onclick="openEditExam('${e.id}')">Edit</button>
+          <button class="btn ${e.status==='active'?'btn-gray':'btn-success'} btn-sm" onclick="toggleExamStatus('${e.id}')">${e.status==='active'?'Disable':'Enable'}</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteExam('${e.id}')">Delete</button>
+        </div>
+      </div>`;
+    }).join('')}
+  `);
+}
+function openAddExam() {
+  html('modalTitle','Create Exam');
+  html('modalBody', examForm({}));
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveExam()">Save</button>`);
+  openModal();
+}
+function openEditExam(id) {
+  const e = load('exams').find(e=>e.id===id);
+  html('modalTitle','Edit Exam');
+  html('modalBody', examForm(e));
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveExam('${id}')">Save</button>`);
+  openModal();
+}
+function examForm(e={}) {
+  const questions = load('questions');
+  const sel = e.questionIds||[];
+  return `
+    <div id="eFormErr" class="error-msg hidden">Fill title, subject and select at least one question.</div>
+    <div class="grid2">
+      <div><label>Exam Title</label><input id="eTitle" value="${e.title||''}"/></div>
+      <div><label>Subject</label><input id="eSubject" value="${e.subject||''}"/></div>
+      <div><label>Duration (min)</label><input type="number" id="eDuration" min="5" max="180" value="${e.duration||30}"/></div>
+      <div><label>Pass Mark (0 = auto 60%)</label><input type="number" id="ePassMark" value="${e.passMark||0}"/></div>
+    </div>
+    <label>Instructions</label>
+    <textarea id="eInstructions">${e.instructions||''}</textarea>
+    <label>Select Questions (<span id="selCount">${sel.length}</span> selected)</label>
+    <div class="q-check-list">
+      ${questions.map(q=>`
+        <label class="q-check-item">
+          <input type="checkbox" data-qid="${q.id}" ${sel.includes(q.id)?'checked':''} onchange="updateSelCount()" style="width:auto;margin:0;margin-top:2px"/>
+          <div>
+            <div style="font-size:13px;font-weight:600">${q.text}</div>
+            <div class="flex-gap" style="margin-top:4px">
+              <span class="badge badge-blue">${q.subject}</span>
+              <span class="badge badge-gray">${q.diff}</span>
+              <span class="badge badge-gray">${q.marks} mark${q.marks>1?'s':''}</span>
+            </div>
+          </div>
+        </label>`).join('')}
+    </div>
+  `;
+}
+function updateSelCount() {
+  const cnt = document.querySelectorAll('input[data-qid]:checked').length;
+  el('selCount').textContent = cnt;
+}
+function saveExam(editId) {
+  const title   = el('eTitle').value.trim();
+  const subject = el('eSubject').value.trim();
+  const selQIds = [...document.querySelectorAll('input[data-qid]:checked')].map(x=>x.dataset.qid);
+  if (!title||!subject||!selQIds.length) { el('eFormErr').classList.remove('hidden'); return; }
+  const questions   = load('questions');
+  const totalMarks  = selQIds.reduce((s,id)=>s+(questions.find(q=>q.id===id)?.marks||0),0);
+  const passMark    = +el('ePassMark').value || Math.round(totalMarks*0.6);
+  const exam = {
+    id: editId||'e'+uid(), title, subject,
+    duration: +el('eDuration').value, totalMarks, passMark,
+    instructions: el('eInstructions').value.trim(),
+    questionIds: selQIds, status: editId?(load('exams').find(e=>e.id===editId)?.status||'active'):'active',
+  };
+  const exams = load('exams');
+  if (editId) { const i=exams.findIndex(x=>x.id===editId); exams[i]=exam; }
+  else exams.push(exam);
+  save('exams',exams);
+  closeModal();
+  renderExams();
+}
+function toggleExamStatus(id) {
+  const exams = load('exams');
+  const e = exams.find(e=>e.id===id);
+  e.status = e.status==='active'?'inactive':'active';
+  save('exams',exams);
+  renderExams();
+}
+function deleteExam(id) {
+  if (!confirm('Delete this exam?')) return;
+  save('exams', load('exams').filter(e=>e.id!==id));
+  renderExams();
+}
+
+// ════════════════════════════════════════════════════════════
+//  STUDENTS
+// ════════════════════════════════════════════════════════════
+function renderStudents() {
+  const users    = load('users').filter(u=>u.role==='student');
+  const attempts = load('attempts');
+  html('pageStudents',`
+    <div class="flex-between mb">
+      <div><div class="page-title">Students</div><div class="page-sub">${users.length} registered</div></div>
+      <button class="btn btn-primary" onclick="openAddStudent()">+ Add Student</button>
+    </div>
+    <div class="card">
+      <table>
+        <thead><tr><th>Name</th><th>Email</th><th>Attempts</th><th>Avg Score</th><th>Action</th></tr></thead>
+        <tbody>
+          ${users.map(s=>{
+            const sa  = attempts.filter(a=>a.studentId===s.id);
+            const avg = sa.length ? Math.round(sa.reduce((a,b)=>a+pct(b.score,b.totalMarks),0)/sa.length) : null;
+            return `<tr>
+              <td><b>${s.name}</b></td>
+              <td style="color:#666;font-size:13px">${s.email}</td>
+              <td>${sa.length}</td>
+              <td>${avg!==null?`<b style="color:${gcol(avg)}">${avg}%</b>`:'—'}</td>
+              <td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${s.id}')">Remove</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+  `);
+}
+function openAddStudent() {
+  html('modalTitle','Add Student');
+  html('modalBody',`
+    <div id="sErr" class="error-msg hidden">Fill all fields. Email must be unique.</div>
+    <label>Full Name</label><input id="sName" placeholder="e.g. Rahul Kumar"/>
+    <label>Email</label><input type="email" id="sEmail" placeholder="student@school.com"/>
+    <label>Password</label><input id="sPassword" value="pass123"/>
+  `);
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveStudent()">Add</button>`);
+  openModal();
+}
+function saveStudent() {
+  const name=el('sName').value.trim(), email=el('sEmail').value.trim(), pw=el('sPassword').value.trim();
+  const users=load('users');
+  if (!name||!email||!pw||users.find(u=>u.email===email)) { el('sErr').classList.remove('hidden'); return; }
+  users.push({id:'u'+uid(),role:'student',name,email,password:pw});
+  save('users',users);
+  closeModal();
+  renderStudents();
+}
+function deleteStudent(id) {
+  if (!confirm('Remove student?')) return;
+  save('users', load('users').filter(u=>u.id!==id));
+  renderStudents();
+}
+
+// ════════════════════════════════════════════════════════════
+//  RESULTS
+// ════════════════════════════════════════════════════════════
+function renderResults() {
+  const attempts = load('attempts');
+  const exams    = load('exams');
+  const isAdmin  = currentUser.role==='admin';
+  const list     = isAdmin ? attempts : attempts.filter(a=>a.studentId===currentUser.id);
+
+  html('pageResults',`
+    <div class="page-title">${isAdmin?'All Results':'My Results'}</div>
+    <div class="page-sub">${list.length} submission${list.length!==1?'s':''}</div>
+    ${list.length===0?'<div class="alert alert-blue">No results yet.</div>':''}
+    ${list.slice().reverse().map(a=>{
+      const p    = pct(a.score,a.totalMarks);
+      const exam = exams.find(e=>e.id===a.examId);
+      const passed = a.score>=(exam?.passMark||0);
+      return `<div class="card" style="border-left:5px solid ${gcol(p)}">
+        <div class="flex-between mb">
+          <div><b style="font-size:15px">${exam?.title||'Unknown'}</b><br><span style="color:#666;font-size:12px">${fmtDate(a.submittedAt)}</span></div>
+          <div style="text-align:right">
+            <div style="font-size:28px;font-weight:800;color:${gcol(p)}">${p}%</div>
+            <span class="badge ${passed?'badge-green':'badge-red'}">${passed?'PASS':'FAIL'}</span>
+          </div>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" style="width:${p}%;background:${gcol(p)}"></div></div>
+        <div class="flex-gap">
+          <span class="badge badge-gray">Score: ${a.score}/${a.totalMarks}</span>
+          <span class="badge badge-gray">Grade: ${grade(p)}</span>
+          <span class="badge badge-gray">Time: ${a.timeTaken} min</span>
+          ${isAdmin?`<span class="badge badge-blue">${a.studentName}</span>`:''}
+          <button class="btn btn-gray btn-sm" onclick="showResultDetail('${a.id}')">View Details</button>
+        </div>
+      </div>`;
+    }).join('')}
+  `);
+}
+function showResultDetail(aid) {
+  const a       = load('attempts').find(a=>a.id===aid);
+  const exam    = load('exams').find(e=>e.id===a.examId);
+  const qBank   = load('questions');
+  const p       = pct(a.score,a.totalMarks);
+  const passed  = a.score>=(exam?.passMark||0);
+  const examQs  = (exam?.questionIds||[]).map(id=>qBank.find(q=>q.id===id)).filter(Boolean);
+
+  html('modalTitle', exam?.title+' — Result');
+  html('modalBody',`
+    <div class="result-header" style="background:${gcol(p)}">
+      <div class="big-num">${p}%</div>
+      <div style="font-size:18px;margin-top:4px">${passed?'✅ PASS':'❌ FAIL'} &nbsp;·&nbsp; Grade: ${grade(p)}</div>
+      <div style="font-size:14px;opacity:0.85;margin-top:6px">Score: ${a.score}/${a.totalMarks} &nbsp;·&nbsp; Time: ${a.timeTaken} min</div>
+    </div>
+    ${examQs.map((q,i)=>{
+      const given=a.answers[q.id]; const isRight=given===q.answer;
+      return `<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid #f3f4f6">
+        <div style="font-weight:600;margin-bottom:8px">Q${i+1}. ${q.text} <span class="badge ${isRight?'badge-green':'badge-red'}">${isRight?'+'+q.marks:'0/'+q.marks}</span></div>
+        <div class="result-options">
+          ${q.options.map((o,oi)=>{
+            const isC=oi===q.answer; const isG=oi===given;
+            let cls='opt-review'; if(isC)cls+=' correct'; else if(isG&&!isC)cls+=' wrong';
+            return `<div class="${cls}">${String.fromCharCode(65+oi)}) ${o} ${isC?'✓':isG&&!isC?'✗':''}</div>`;
+          }).join('')}
+        </div>
+        ${given===undefined?'<div style="color:#d97706;font-size:12px;margin-top:4px">⚠ Not answered</div>':''}
+      </div>`;
+    }).join('')}
+  `);
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Close</button>`);
+  openModal();
+}
+
+// ════════════════════════════════════════════════════════════
+//  PROFILE
+// ════════════════════════════════════════════════════════════
+function renderProfile() {
+  const attempts = load('attempts').filter(a=>a.studentId===currentUser.id);
+  const exams    = load('exams');
+  const overall  = attempts.length ? pct(attempts.reduce((s,a)=>s+a.score,0), attempts.reduce((s,a)=>s+a.totalMarks,0)) : 0;
+
+  // Subject stats
+  const subj = {};
+  attempts.forEach(a=>{
+    const ex = exams.find(e=>e.id===a.examId);
+    const s  = ex?.subject||'Other';
+    if(!subj[s]) subj[s]={score:0,total:0};
+    subj[s].score+=a.score; subj[s].total+=a.totalMarks;
+  });
+
+  html('pageProfile',`
+    <div class="page-title">My Profile</div>
+    <div class="card" style="max-width:400px;margin-bottom:16px">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="width:70px;height:70px;border-radius:50%;background:#1e3a5f;color:#fff;font-size:28px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 10px">${currentUser.name[0]}</div>
+        <div style="font-weight:800;font-size:18px">${currentUser.name}</div>
+        <div style="color:#666;font-size:14px">${currentUser.email}</div>
+      </div>
+      <table>
+        <tr><td style="color:#666">Exams Taken</td><td style="font-weight:700;text-align:right">${attempts.length}</td></tr>
+        <tr><td style="color:#666">Overall Score</td><td style="font-weight:700;text-align:right;color:${gcol(overall)}">${overall}%</td></tr>
+        <tr><td style="color:#666">Best Grade</td><td style="font-weight:700;text-align:right">${attempts.length?grade(Math.max(...attempts.map(a=>pct(a.score,a.totalMarks)))):'—'}</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>Performance by Subject</h3>
+      ${Object.keys(subj).length===0?'<p style="color:#999">No data yet.</p>':
+        Object.entries(subj).map(([s,d])=>{
+          const p=pct(d.score,d.total);
+          return `<div style="margin-bottom:14px">
+            <div class="flex-between" style="margin-bottom:6px;font-size:14px">
+              <span style="font-weight:600">${s}</span>
+              <span style="font-weight:700;color:${gcol(p)}">${p}%</span>
+            </div>
+            <div class="progress-wrap"><div class="progress-bar" style="width:${p}%;background:${gcol(p)}"></div></div>
+          </div>`;
+        }).join('')}
+    </div>
+  `);
+}
+
+// ════════════════════════════════════════════════════════════
+//  EXAM SESSION
+// ════════════════════════════════════════════════════════════
+function confirmStart(examId) {
+  const exam = load('exams').find(e=>e.id===examId);
+  html('modalTitle','Ready to start?');
+  html('modalBody',`
+    <div class="alert alert-blue"><b>${exam.title}</b><br>${exam.duration} minutes &nbsp;·&nbsp; ${exam.questionIds.length} questions &nbsp;·&nbsp; ${exam.totalMarks} marks</div>
+    ${exam.instructions?`<div class="alert alert-amber">📌 ${exam.instructions}</div>`:''}
+    <div class="alert alert-amber">⚠️ Timer starts immediately. Do not refresh the page.</div>
+  `);
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="startExam('${examId}')">Start Now →</button>`);
+  openModal();
+}
+function startExam(examId) {
+  closeModal();
+  const exam      = load('exams').find(e=>e.id===examId);
+  const questions = exam.questionIds.map(id=>load('questions').find(q=>q.id===id)).filter(Boolean);
+  examState = { exam, questions, answers:{}, timeLeft: exam.duration*60, startTime: Date.now(), currentQ: 0 };
+  showPage('examSession');
+  renderExamSession();
+  examState.timer = setInterval(tickTimer, 1000);
+}
+function tickTimer() {
+  if (!examState) return;
+  examState.timeLeft--;
+  if (examState.timeLeft <= 0) { clearInterval(examState.timer); submitExam(true); return; }
+  const m = String(Math.floor(examState.timeLeft/60)).padStart(2,'0');
+  const s = String(examState.timeLeft%60).padStart(2,'0');
+  const timerEl = el('examTimer');
+  if (timerEl) {
+    timerEl.textContent = m+':'+s;
+    timerEl.className   = 'timer'+(examState.timeLeft<120?' urgent':'');
+  }
+  const answered = Object.keys(examState.answers).length;
+  const ansEl = el('examAnswered');
+  if (ansEl) ansEl.textContent = answered+'/'+examState.questions.length+' answered';
+}
+function renderExamSession() {
+  const {exam, questions, answers, currentQ} = examState;
+  const q        = questions[currentQ];
+  const answered = Object.keys(answers).length;
+  const m = String(Math.floor(examState.timeLeft/60)).padStart(2,'0');
+  const s = String(examState.timeLeft%60).padStart(2,'0');
+
+  html('pageExamSession',`
+    <div class="exam-header">
+      <div>
+        <div style="font-size:17px;font-weight:800">${exam.title}</div>
+        <div style="font-size:13px;opacity:0.85" id="examAnswered">${answered}/${questions.length} answered</div>
+      </div>
+      <div class="timer${examState.timeLeft<120?' urgent':''}" id="examTimer">${m}:${s}</div>
+      <button class="btn btn-gray btn-sm" onclick="confirmSubmit()">Submit</button>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-bottom:10px;color:#666;font-size:13px">Question Navigator</h3>
+      <div class="q-nav">
+        ${questions.map((_,i)=>`<button class="${i===currentQ?'current':answers[questions[i].id]!==undefined?'answered':''}" onclick="goToQ(${i})">${i+1}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between mb">
+        <div class="flex-gap">
+          <span class="badge badge-blue">${q.subject}</span>
+          <span class="badge ${q.diff==='Hard'?'badge-red':q.diff==='Medium'?'badge-amber':'badge-green'}">${q.diff}</span>
+          <span class="badge badge-gray">${q.marks} mark${q.marks>1?'s':''}</span>
+        </div>
+        <span style="color:#999;font-size:13px">Q ${currentQ+1} / ${questions.length}</span>
+      </div>
+      <div style="font-size:17px;font-weight:600;line-height:1.5;margin-bottom:18px">${q.text}</div>
+      ${q.options.map((opt,i)=>`
+        <button class="option-btn${answers[q.id]===i?' selected':''}" onclick="selectAnswer(${i})">
+          <div class="opt-circle">${String.fromCharCode(65+i)}</div>
+          <span>${opt}</span>
+        </button>`).join('')}
+      <div class="flex-between mt">
+        <button class="btn btn-gray" ${currentQ===0?'disabled':''} onclick="goToQ(${currentQ-1})">← Prev</button>
+        ${currentQ<questions.length-1
+          ? `<button class="btn btn-primary" onclick="goToQ(${currentQ+1})">Next →</button>`
+          : `<button class="btn btn-success" onclick="confirmSubmit()">Finish ✓</button>`}
+      </div>
+    </div>
+  `);
+}
+function selectAnswer(i) {
+  examState.answers[examState.questions[examState.currentQ].id] = i;
+  renderExamSession();
+}
+function goToQ(i) {
+  examState.currentQ = i;
+  renderExamSession();
+}
+function confirmSubmit() {
+  const unanswered = examState.questions.length - Object.keys(examState.answers).length;
+  html('modalTitle','Submit Exam?');
+  html('modalBody',`
+    <div class="alert ${unanswered?'alert-amber':'alert-green'}">
+      ${unanswered ? `⚠️ ${unanswered} question${unanswered>1?'s':''} not answered.` : '✅ All questions answered!'}
+    </div>
+    <p style="font-size:14px;color:#666">Once submitted you cannot change your answers.</p>
+  `);
+  html('modalFooter',`<button class="btn btn-gray" onclick="closeModal()">Back</button><button class="btn btn-primary" onclick="submitExam(false)">Submit Now</button>`);
+  openModal();
+}
+function submitExam(auto=false) {
+  closeModal();
+  clearInterval(examState.timer);
+  const {exam, questions, answers} = examState;
+  const score     = questions.reduce((sum,q)=>sum+(answers[q.id]===q.answer?q.marks:0), 0);
+  const timeTaken = Math.round((Date.now()-examState.startTime)/60000);
+  const attempt = {
+    id:'a'+uid(), examId:exam.id, studentId:currentUser.id, studentName:currentUser.name,
+    answers, score, totalMarks:exam.totalMarks, timeTaken, submittedAt:new Date().toISOString(),
+  };
+  const attempts = load('attempts');
+  attempts.push(attempt);
+  save('attempts', attempts);
+  examState = null;
+  showResultScreen(attempt, exam, questions, auto);
+}
+function showResultScreen(attempt, exam, questions, auto) {
+  const p      = pct(attempt.score, attempt.totalMarks);
+  const passed = attempt.score >= exam.passMark;
+  html('pageExamSession',`
+    <div class="result-header" style="background:${gcol(p)}">
+      <div style="font-size:48px">${passed?'🎉':'😔'}</div>
+      <div class="big-num">${p}%</div>
+      <div style="font-size:18px;margin-top:4px">${passed?'Congratulations — You Passed!':'Keep practising!'}</div>
+      ${auto?'<div style="font-size:13px;opacity:0.75;margin-top:4px">Auto-submitted: time expired</div>':''}
+    </div>
+    <div class="stats" style="justify-content:center">
+      ${[['Score',attempt.score+'/'+attempt.totalMarks],['Grade',grade(p)],['Pass Mark',exam.passMark],['Status',passed?'PASS':'FAIL'],['Time',attempt.timeTaken+' min']].map(([l,v])=>`
+        <div style="text-align:center;background:#f8f9fc;border-radius:10px;padding:12px 16px;min-width:90px;flex:1">
+          <div style="font-size:20px;font-weight:800;color:${gcol(p)}">${v}</div>
+          <div style="font-size:11px;color:#666;margin-top:4px">${l}</div>
+        </div>`).join('')}
+    </div>
+    <div class="card">
+      <h3>Answer Review</h3>
+      ${questions.map((q,i)=>{
+        const given=attempt.answers[q.id]; const isRight=given===q.answer;
+        return `<div style="padding:12px 0;border-bottom:1px solid #f3f4f6">
+          <div style="font-weight:600;margin-bottom:8px;display:flex;justify-content:space-between">
+            <span>Q${i+1}. ${q.text}</span>
+            <span class="badge ${isRight?'badge-green':'badge-red'}">${isRight?'+'+q.marks:'0'}</span>
+          </div>
+          <div class="result-options">
+            ${q.options.map((o,oi)=>{
+              const isC=oi===q.answer; const isG=oi===given;
+              let cls='opt-review'; if(isC)cls+=' correct'; else if(isG&&!isC)cls+=' wrong';
+              return `<div class="${cls}">${String.fromCharCode(65+oi)}) ${o} ${isC?'✓':isG&&!isC?'✗':''}</div>`;
+            }).join('')}
+          </div>
+          ${given===undefined?'<div style="color:#d97706;font-size:12px;margin-top:4px">⚠ Not answered</div>':''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="text-align:center;margin-top:16px">
+      <button class="btn btn-primary" style="padding:12px 36px" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+  `);
+}
+
+// ════════════════════════════════════════════════════════════
+//  MODAL HELPERS
+// ════════════════════════════════════════════════════════════
+function openModal() {
+  el('modalOverlay').classList.remove('hidden');
+}
+function closeModal(e) {
+  if (!e || e.target === el('modalOverlay')) {
+    el('modalOverlay').classList.add('hidden');
+  }
+}
+</script>
+</body>
+</html>
